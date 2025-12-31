@@ -1,8 +1,15 @@
 import { kv } from '@vercel/kv';
 
-export default async function handler(req, res) {
+export const config = {
+  runtime: 'edge',
+};
+
+export default async function handler(req) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -14,28 +21,43 @@ export default async function handler(req, res) {
     for (const id of feedbackIds) {
       const feedback = await kv.get(id);
       if (feedback) {
-        allFeedback.push(JSON.parse(feedback));
+        allFeedback.push(feedback);
       }
     }
 
-    // Return as CSV
-    const csv = convertToCSV(allFeedback);
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=feedback.csv');
-    return res.send(csv);
+    // Convert to CSV
+    if (allFeedback.length === 0) {
+      return new Response('No feedback data available', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' },
+      });
+    }
+
+    const headers = Object.keys(allFeedback[0]);
+    const csvRows = [
+      headers.join(','),
+      ...allFeedback.map(obj =>
+        headers.map(header => {
+          const value = obj[header] || '';
+          return typeof value === 'string' && value.includes(',') 
+            ? `"${value}"` 
+            : value;
+        }).join(',')
+      )
+    ];
+
+    return new Response(csvRows.join('\n'), {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename=fosdem-feedback.csv',
+      },
+    });
   } catch (error) {
     console.error('Error exporting feedback:', error);
-    return res.status(500).json({ error: 'Failed to export feedback' });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
-}
-
-function convertToCSV(data) {
-  if (data.length === 0) return '';
-  
-  const headers = Object.keys(data[0]);
-  const rows = data.map(obj => 
-    headers.map(header => JSON.stringify(obj[header] || '')).join(',')
-  );
-  
-  return [headers.join(','), ...rows].join('\n');
 }
