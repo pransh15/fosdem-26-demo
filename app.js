@@ -241,10 +241,11 @@ function initializeCharCount() {
 function initializeContactConsent() {
     const checkbox = document.getElementById('contactConsent');
     const emailField = document.getElementById('email');
-    
+
     checkbox.addEventListener('change', function() {
         emailField.style.display = this.checked ? 'block' : 'none';
-        emailField.required = this.checked;
+        // Email is optional even if consent is checked
+        emailField.required = false;
         if (!this.checked) {
             emailField.value = '';
         }
@@ -273,7 +274,7 @@ function initializeFormSubmission() {
 
         try {
             // Submit to Google Sheets
-            const response = await fetch(CONFIG.GOOGLE_SCRIPT_URL, {
+            await fetch(CONFIG.GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors', // Required for Google Apps Script
                 headers: { 'Content-Type': 'application/json' },
