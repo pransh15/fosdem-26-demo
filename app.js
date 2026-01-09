@@ -1,7 +1,9 @@
 // Configuration
 const CONFIG = {
     STORAGE_KEY: 'mozilla_fosdem2026_feedback',
-    CHAR_LIMIT: 500
+    CHAR_LIMIT: 500,
+    // Replace this with your Google Apps Script Web App URL
+    GOOGLE_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzwdH40aQlNyR551U6ooySV8Lk0q3vP9W2J2Uy3phOSEx-huWrMu7YSIQH3wcpLdTGr/exec'
 };
 
 // State
@@ -249,7 +251,7 @@ function initializeContactConsent() {
     });
 }
 
-// Form submission (Vercel KV with localStorage fallback)
+// Form submission (Google Sheets with localStorage fallback)
 function initializeFormSubmission() {
     const form = document.getElementById('feedbackFormElement');
 
@@ -270,26 +272,28 @@ function initializeFormSubmission() {
         const data = Object.fromEntries(formData);
 
         try {
-            const response = await fetch('/api/feedback', {
+            // Submit to Google Sheets
+            const response = await fetch(CONFIG.GOOGLE_SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors', // Required for Google Apps Script
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
 
-            if (response.ok) {
-                markFeedbackSubmitted(currentVideo.id);
-                showThankYouState();
-                logEvent('feedback_submitted', {
-                    demoId: currentVideo.id,
-                    sentiment: data.sentiment
-                });
-            } else {
-                throw new Error('Submission failed');
-            }
-        } catch (error) {
-            console.error('Error submitting to API, using localStorage fallback:', error);
+            // no-cors mode doesn't return response, so we assume success
+            console.log('Feedback submitted to Google Sheets');
 
-            // Fallback to localStorage for local development
+            markFeedbackSubmitted(currentVideo.id);
+            showThankYouState();
+            logEvent('feedback_submitted', {
+                demoId: currentVideo.id,
+                sentiment: data.sentiment
+            });
+
+        } catch (error) {
+            console.error('Error submitting to Google Sheets, using localStorage fallback:', error);
+
+            // Fallback to localStorage
             const localFeedback = JSON.parse(localStorage.getItem('mozilla_fosdem_feedback_data') || '[]');
             localFeedback.push({
                 ...data,
