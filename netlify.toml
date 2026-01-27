@@ -1,5 +1,4 @@
 [build]
+  command = ""
   publish = "."
   
-[[plugins]]
-  package = "@netlify/plugin-forms"
