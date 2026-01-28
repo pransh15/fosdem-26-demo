@@ -27,6 +27,15 @@
     "duration": "5 min"
   },
   {
+    "id": "firefox-android",
+    "title": "Firefox Android",
+    "speakers": ["Android Team"],
+    "videoUrl": "/videos/Firefox-Android.mp4",
+    "posterUrl": "",
+    "tags": ["Android"],
+    "duration": "3 min"
+  },
+  {
     "id": "desktop-sidebar-tabs",
     "title": "Firefox Desktop - Sidebar and Vertical Tabs",
     "speakers": ["Desktop Team"],
